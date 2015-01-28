@@ -18,6 +18,7 @@
  * @author Gav Wood <i@gavwood.com>
  * @date 2014
  */
+#ifndef ETH_EMSCRIPTEN
 
 #include "TrieHash.h"
 #include <libdevcore/TrieCommon.h>
@@ -193,3 +194,5 @@ h256 orderedTrieRoot(std::vector<bytesConstRef> const& _data)
 }
 
 }
+
+#endif

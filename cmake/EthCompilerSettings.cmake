@@ -17,7 +17,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 
-	set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wno-unknown-pragmas -Wextra -DSHAREDLIB -fPIC")
+	set(CMAKE_CXX_FLAGS "-std=c++11 --memory-init-file 0 -s ASSERTIONS=1 -s LINKABLE=1 -s DISABLE_EXCEPTION_CATCHING=0 -s NO_EXIT_RUNTIME=1 -Wall -Wno-unknown-pragmas -Wextra -DSHAREDLIB -fPIC")
 	set(CMAKE_CXX_FLAGS_DEBUG          "-O0 -g -DETH_DEBUG")
 	set(CMAKE_CXX_FLAGS_DEBUGSAN       "-O1 -g -fsanitize=address,integer,undefined -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/sanitizer-blacklist.txt -fno-omit-frame-pointer -DETH_DEBUG")
 	set(CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG -DETH_RELEASE")

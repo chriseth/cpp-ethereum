@@ -41,6 +41,14 @@ message(STATUS "ctest path: ${CTEST_COMMAND}")
 
 # Dependencies must have a version number, to ensure reproducible build. The version provided here is the one that is in the extdep repository. If you use system libraries, version numbers may be different.
 
+if (EMSCRIPTEN)
+set(CRYPTOPP_INCLUDE_DIRS ../cryptopp/src)
+include_directories(../cryptopp/src)
+set(CRYPTOPP_LIBRARIES /home/user/cryptopp/src/libcryptlib.a)
+set(JSONCPP_INCLUDE_DIRS ../jsoncpp/include)
+include_directories(../jsoncpp/include)
+set(JSONCPP_LIBRARIES /home/user/jsoncpp/src/lib_json/libjsoncpp.a)
+else()
 find_package (CryptoPP 5.6.2 EXACT REQUIRED)
 message(" - CryptoPP header: ${CRYPTOPP_INCLUDE_DIRS}")
 message(" - CryptoPP lib   : ${CRYPTOPP_LIBRARIES}")
@@ -80,6 +88,7 @@ if (JSONRPC)
 	message(" - microhttpd lib   : ${MHD_LIBRARIES}")
 	message(" - microhttpd dll   : ${MHD_DLLS}")
 endif() #JSONRPC
+endif() #EMSCRIPTEN
 
 # TODO readline package does not yet check for correct version number
 # TODO make readline package dependent on cmake options
@@ -213,7 +222,14 @@ elseif (UNIX)
 
 endif()
 
+if(EMSCRIPTEN)
+include_directories(../boost_1_57_0)
+set(Boost_THREAD_LIBRARIES /home/user/boost_1_57_0/bin.v2/libs/thread/build/gcc/release/link-static/runtime-link-static/threading-multi/libboost_thread.a)
+set(Boost_SYSTEM_LIBRARIES /home/user/boost_1_57_0/bin.v2/libs/system/build/gcc/release/link-static/runtime-link-static/libboost_system.a)
+set(Boost_REGEX_LIBRARIES /home/user/boost_1_57_0/bin.v2/libs/regex/build/gcc/release/link-static/runtime-link-static/libboost_regex.a)
+else()
 find_package(Boost 1.54.0 REQUIRED COMPONENTS thread date_time system regex chrono filesystem unit_test_framework program_options)
+endif()
 
 message(" - boost header: ${Boost_INCLUDE_DIRS}")
 message(" - boost lib   : ${Boost_LIBRARIES}")

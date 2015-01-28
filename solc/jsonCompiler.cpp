@@ -28,6 +28,7 @@
 #include <libdevcore/CommonIO.h>
 #include <libevmcore/Instruction.h>
 #include <libevmcore/Params.h>
+#include <libsolidity/Version.h>
 #include <libsolidity/Scanner.h>
 #include <libsolidity/Parser.h>
 #include <libsolidity/ASTPrinter.h>
@@ -188,5 +189,9 @@ extern char const* compileJSON(char const* _input, bool _optimize)
 {
 	outputBuffer = compile(_input, _optimize);
 	return outputBuffer.c_str();
+}
+extern char const* version()
+{
+	return VersionString.c_str();
 }
 }

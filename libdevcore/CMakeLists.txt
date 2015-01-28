@@ -25,7 +25,7 @@ add_library(${EXECUTABLE} ${SRC_LIST} ${HEADERS})
 
 target_link_libraries(${EXECUTABLE} ${Boost_THREAD_LIBRARIES})
 target_link_libraries(${EXECUTABLE} ${Boost_SYSTEM_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${Boost_FILESYSTEM_LIBRARIES})
+#target_link_libraries(${EXECUTABLE} ${Boost_FILESYSTEM_LIBRARIES})
 target_link_libraries(${EXECUTABLE} ${JSONCPP_LIBRARIES})
 target_link_libraries(${EXECUTABLE} ${DB_LIBRARIES})
 
@@ -39,7 +39,9 @@ if (APPLE)
 	find_package(Threads REQUIRED)
 	target_link_libraries(${EXECUTABLE} ${CMAKE_THREAD_LIBS_INIT})
 elseif (UNIX)
+	if(NOT EMSCRIPTEN)
 	find_package(Threads REQUIRED)
+	endif()
 	target_link_libraries(${EXECUTABLE} ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
