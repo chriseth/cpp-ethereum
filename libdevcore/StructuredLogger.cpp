@@ -81,44 +81,6 @@ void StructuredLogger::stopping(string const& _clientImpl, const char* _ethVersi
 	}
 }
 
-void StructuredLogger::p2pConnected(
-	string const& _id,
-	bi::tcp::endpoint const& _addr,
-	chrono::system_clock::time_point const& _ts,
-	string const& _remoteVersion,
-	unsigned int _numConnections)
-{
-	if (get().m_enabled)
-	{
-		std::stringstream addrStream;
-		addrStream << _addr;
-		Json::Value event;
-		event["remote_version_string"] = _remoteVersion;
-		event["remote_addr"] = addrStream.str();
-		event["remote_id"] = _id;
-		event["num_connections"] = Json::Value(_numConnections);
-		event["ts"] = dev::toString(_ts, get().m_timeFormat.c_str());
-
-		get().outputJson(event, "p2p.connected");
-	}
-}
-
-void StructuredLogger::p2pDisconnected(string const& _id, bi::tcp::endpoint const& _addr, unsigned int _numConnections)
-{
-	if (get().m_enabled)
-	{
-		std::stringstream addrStream;
-		addrStream << _addr;
-		Json::Value event;
-		event["remote_addr"] = addrStream.str();
-		event["remote_id"] = _id;
-		event["num_connections"] = Json::Value(_numConnections);
-		event["ts"] = dev::toString(chrono::system_clock::now(), get().m_timeFormat.c_str());
-
-		get().outputJson(event, "p2p.disconnected");
-	}
-}
-
 void StructuredLogger::minedNewBlock(
 	string const& _hash,
 	string const& _blockNumber,

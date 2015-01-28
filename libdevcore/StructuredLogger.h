@@ -57,18 +57,6 @@ public:
 
 	static void starting(std::string const& _clientImpl, const char* _ethVersion);
 	static void stopping(std::string const& _clientImpl, const char* _ethVersion);
-	static void p2pConnected(
-		std::string const& _id,
-		bi::basic_endpoint<bi::tcp> const& _addr,
-		std::chrono::system_clock::time_point const& _ts,
-		std::string const& _remoteVersion,
-		unsigned int _numConnections
-	);
-	static void p2pDisconnected(
-		std::string const& _id,
-		bi::basic_endpoint<bi::tcp> const& _addr,
-		unsigned int _numConnections
-	);
 	static void minedNewBlock(
 		std::string const& _hash,
 		std::string const& _blockNumber,

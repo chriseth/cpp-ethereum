@@ -18,6 +18,7 @@
  * @author Gav Wood <i@gavwood.com>
  * @date 2014
  */
+#ifndef ETH_EMSCRIPTEN
 
 #include "TrieCommon.h"
 
@@ -125,3 +126,4 @@ byte uniqueInUse(RLP const& _orig, byte except)
 }
 
 }
+#endif // ETH_EMSCRIPTEN
