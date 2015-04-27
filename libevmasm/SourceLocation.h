@@ -25,6 +25,7 @@
 #include <memory>
 #include <string>
 #include <ostream>
+#include <tuple>
 
 namespace dev
 {
@@ -45,6 +46,7 @@ struct SourceLocation
 
 	bool operator==(SourceLocation const& _other) const { return start == _other.start && end == _other.end;}
 	bool operator!=(SourceLocation const& _other) const { return !operator==(_other); }
+	inline bool operator<(SourceLocation const& _other) const;
 
 	bool isEmpty() const { return start == -1 && end == -1; }
 
@@ -59,6 +61,13 @@ inline std::ostream& operator<<(std::ostream& _out, SourceLocation const& _locat
 	if (_location.isEmpty())
 		return _out << "NO_LOCATION_SPECIFIED";
 	return _out << *_location.sourceName << "[" << _location.start << "," << _location.end << ")";
+}
+
+bool SourceLocation::operator<(SourceLocation const& _other) const
+{
+	if (!!sourceName != !!_other.sourceName)
+		return int(!!sourceName) < int(!!_other.sourceName);
+	return make_tuple(*sourceName, start, end) < make_tuple(*_other.sourceName, _other.start, _other.end);
 }
 
 }
