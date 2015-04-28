@@ -24,6 +24,7 @@
 
 #include <ostream>
 #include <libsolidity/ASTVisitor.h>
+#include <libevmasm/GasMeter.h>
 
 namespace dev
 {
@@ -38,7 +39,8 @@ class ASTPrinter: public ASTConstVisitor
 public:
 	/// Create a printer for the given abstract syntax tree. If the source is specified,
 	/// the corresponding parts of the source are printed with each node.
-	ASTPrinter(ASTNode const& _ast, std::string const& _source = std::string());
+	ASTPrinter(ASTNode const& _ast, std::string const& _source = std::string(),
+			   std::map<ASTNode const*, eth::GasMeter::GasConsumption[2]> const& _gasCosts = {});
 	/// Output the string representation of the AST to _stream.
 	void print(std::ostream& _stream);
 
@@ -124,6 +126,8 @@ private:
 	std::string getIndentation() const;
 	void writeLine(std::string const& _line);
 	bool goDeeper() { m_indentation++; return true; }
+
+	std::map<ASTNode const*, eth::GasMeter::GasConsumption[2]> m_gasCosts;
 
 	int m_indentation;
 	std::string m_source;

@@ -46,9 +46,13 @@ public:
 
 		StructuralGasEstimator estimator;
 		AssemblyItems const* items = compiler.getRuntimeAssemblyItems("");
+		SourceUnit const& sourceUnit = compiler.getAST();
 		BOOST_REQUIRE(items != nullptr);
-		estimator.performEstimation(*items);
+		m_gasCosts = estimator.performEstimation(*items, std::vector<SourceUnit const*>({&sourceUnit}));
 	}
+
+protected:
+	map<ASTNode const*, eth::GasMeter::GasConsumption[2]> m_gasCosts;
 };
 
 BOOST_FIXTURE_TEST_SUITE(GasMeterTests, GasMeterTestFramework)

@@ -22,6 +22,9 @@
 
 #pragma once
 
+#include <vector>
+#include <map>
+#include <libsolidity/ASTForward.h>
 #include <libevmasm/GasMeter.h>
 #include <libevmasm/Assembly.h>
 
@@ -35,7 +38,11 @@ class StructuralGasEstimator
 public:
 	/// Estimates the gas consumption for every assembly item in the given assembly and stores
 	/// it by source location.
-	void performEstimation(eth::AssemblyItems const& _items);
+	/// @returns a mapping from each AST node to a pair of its particular and syntactically accumulated gas costs.
+	std::map<ASTNode const*, eth::GasMeter::GasConsumption[2]> performEstimation(
+		eth::AssemblyItems const& _items,
+		std::vector<SourceUnit const*> const& _ast
+	);
 };
 
 }

@@ -22,26 +22,40 @@
 
 #include "StructuralGasEstimator.h"
 #include <map>
+#include <functional>
 #include <libsolidity/AST.h>
+#include <libsolidity/ASTVisitor.h>
 
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
 using namespace dev::solidity;
 
-void StructuralGasEstimator::performEstimation(AssemblyItems const& _items)
+map<ASTNode const*, GasMeter::GasConsumption[2]> StructuralGasEstimator::performEstimation(
+	AssemblyItems const& _items,
+	vector<SourceUnit const*> const& _ast
+)
 {
-	set<SourceLocation> allLocations;
 	map<SourceLocation, GasMeter::GasConsumption> particularCosts;
-	vector<SourceLocation> rootLocations;
-	map<SourceLocation, SourceLocation> parentMap;
-	map<SourceLocation, GasMeter::GasConsumption> cumulativeCosts;
+	map<ASTNode const*, GasMeter::GasConsumption[2]> gasCosts;
 
 	GasMeter meter;
 
 	for (auto const& item: _items)
-	{
-		allLocations.insert(item.getLocation());
 		particularCosts[item.getLocation()] += meter.estimateMax(item);
-	}
+
+	auto onNode = [&](ASTNode const& _node)
+	{
+		gasCosts[&_node][0] = gasCosts[&_node][1] = particularCosts[_node.getLocation()];
+		return true;
+	};
+	auto onEdge = [&](ASTNode const& _parent, ASTNode const& _child)
+	{
+		gasCosts[&_parent][1] += gasCosts[&_child][1];
+	};
+	ASTReduce folder(onNode, onEdge);
+	for (SourceUnit const* unit: _ast)
+		unit->accept(folder);
+
+	return gasCosts;
 }
