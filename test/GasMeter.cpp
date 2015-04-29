@@ -21,7 +21,9 @@
  */
 
 #include <test/libsolidity/solidityExecutionFramework.h>
+#include <libsolidity/AST.h>
 #include <libsolidity/StructuralGasEstimator.h>
+#include <libsolidity/SourceReferenceFormatter.h>
 
 using namespace std;
 using namespace dev::eth;
@@ -40,32 +42,53 @@ public:
 	GasMeterTestFramework() { }
 	void compile(string const& _sourceCode)
 	{
-		dev::solidity::CompilerStack compiler(false);
-		compiler.addSource("", _sourceCode);
-		ETH_TEST_REQUIRE_NO_THROW(compiler.compile(), "Compiling contract failed");
+		m_compiler.setSource(_sourceCode);
+		ETH_TEST_REQUIRE_NO_THROW(m_compiler.compile(), "Compiling contract failed");
 
 		StructuralGasEstimator estimator;
-		AssemblyItems const* items = compiler.getRuntimeAssemblyItems("");
-		SourceUnit const& sourceUnit = compiler.getAST();
+		AssemblyItems const* items = m_compiler.getRuntimeAssemblyItems("");
+		ASTNode const& sourceUnit = m_compiler.getAST();
 		BOOST_REQUIRE(items != nullptr);
-		m_gasCosts = estimator.performEstimation(*items, std::vector<SourceUnit const*>({&sourceUnit}));
+		m_gasCosts = estimator.breakToStatementLevel(
+			estimator.performEstimation(*items, vector<ASTNode const*>({&sourceUnit})),
+			{&sourceUnit}
+		);
 	}
 
 protected:
-	map<ASTNode const*, eth::GasMeter::GasConsumption[2]> m_gasCosts;
+	dev::solidity::CompilerStack m_compiler;
+	map<ASTNode const*, eth::GasMeter::GasConsumption> m_gasCosts;
 };
 
 BOOST_FIXTURE_TEST_SUITE(GasMeterTests, GasMeterTestFramework)
 
-BOOST_AUTO_TEST_CASE(smoke_test)
+BOOST_AUTO_TEST_CASE(non_overlapping_filtered_costs)
 {
 	char const* sourceCode = R"(
 		contract test {
+			bytes x;
 			function f(uint a) returns (uint b) {
-				return a;
+				x.length = a;
+				for (; a < 200; ++a) {
+					x[a] = 9;
+					b = a * a;
+				}
+				return f(a - 1);
 			}
-		})";
+		}
+	)";
 	compile(sourceCode);
+	for (auto first = m_gasCosts.cbegin(); first != m_gasCosts.cend(); ++first)
+	{
+		auto second = first;
+		for (++second; second != m_gasCosts.cend(); ++second)
+			if (first->first->getLocation().intersects(second->first->getLocation()))
+			{
+				BOOST_CHECK_MESSAGE(false, "Source locations should not overlap!");
+				SourceReferenceFormatter::printSourceLocation(cout, first->first->getLocation(), m_compiler.getScanner());
+				SourceReferenceFormatter::printSourceLocation(cout, second->first->getLocation(), m_compiler.getScanner());
+			}
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()

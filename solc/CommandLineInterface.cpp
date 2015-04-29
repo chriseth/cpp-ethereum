@@ -443,11 +443,15 @@ void CommandLineInterface::handleAst(string const& _argStr)
 	if (m_args.count(_argStr))
 	{
 		StructuralGasEstimator gasEstimator;
-		vector<SourceUnit const*> asts;
+		vector<ASTNode const*> asts;
 		for (auto const& sourceCode: m_sourceCodes)
 			asts.push_back(&m_compiler->getAST(sourceCode.first));
-		map<ASTNode const*, eth::GasMeter::GasConsumption[2]> gasCosts =
-			gasEstimator.performEstimation(m_compiler->getRuntimeAssembly(), asts);
+		map<ASTNode const*, eth::GasMeter::GasConsumption> gasCosts;
+		if (m_compiler->getRuntimeAssemblyItems())
+			gasCosts = gasEstimator.breakToStatementLevel(
+				gasEstimator.performEstimation(*m_compiler->getRuntimeAssemblyItems(), asts),
+				asts
+			);
 
 		auto choice = m_args[_argStr].as<OutputType>();
 		if (outputToStdout(choice))

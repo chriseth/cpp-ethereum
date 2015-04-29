@@ -82,7 +82,7 @@ GasMeter::GasConsumption GasMeter::estimateMax(AssemblyItem const& _item)
 		default:
 			break;
 		}
-		//@todo memory gas
+		return gas;
 		break;
 	}
 	default:

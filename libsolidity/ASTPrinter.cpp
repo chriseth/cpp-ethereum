@@ -30,8 +30,12 @@ namespace dev
 namespace solidity
 {
 
-ASTPrinter::ASTPrinter(ASTNode const& _ast, string const& _source, map<ASTNode const*, eth::GasMeter::GasConsumption[2]> const& _gasCosts):
-	m_indentation(0), m_source(_source), m_ast(&_ast), m_gasCosts(_gasCosts)
+ASTPrinter::ASTPrinter(
+	ASTNode const& _ast,
+	string const& _source,
+	map<ASTNode const*,
+	eth::GasMeter::GasConsumption> const& _gasCosts
+): m_indentation(0), m_source(_source), m_ast(&_ast), m_gasCosts(_gasCosts)
 {
 }
 
@@ -504,11 +508,7 @@ void ASTPrinter::endVisit(Literal const&)
 void ASTPrinter::printSourcePart(ASTNode const& _node)
 {
 	if (m_gasCosts.count(&_node))
-	{
-		eth::GasMeter::GasConsumption[2] gas = m_gasCosts.at(&_node);
-		*m_ostream << getIndentation() << "   Gas costs: " <<
-					gas[0] << " - " << gas[1] << endl;
-	}
+		*m_ostream << getIndentation() << "   Gas costs: " << m_gasCosts.at(&_node) << endl;
 	if (!m_source.empty())
 	{
 		SourceLocation const& location(_node.getLocation());

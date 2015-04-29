@@ -41,7 +41,15 @@ public:
 	/// @returns a mapping from each AST node to a pair of its particular and syntactically accumulated gas costs.
 	std::map<ASTNode const*, eth::GasMeter::GasConsumption[2]> performEstimation(
 		eth::AssemblyItems const& _items,
-		std::vector<SourceUnit const*> const& _ast
+		std::vector<ASTNode const*> const& _ast
+	);
+	/// @returns a mapping from nodes with non-overlapping source locations to gas consumptions such that
+	/// the following source locations are part of the mapping:
+	/// 1. source locations of statements that do not contain other statements
+	/// 2. maximal source locations that do not overlap locations coming from the first rule
+	std::map<ASTNode const*, eth::GasMeter::GasConsumption> breakToStatementLevel(
+		std::map<ASTNode const*, eth::GasMeter::GasConsumption[2]> const& _gasCosts,
+		std::vector<ASTNode const*> const& _roots
 	);
 };
 

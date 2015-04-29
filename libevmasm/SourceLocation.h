@@ -48,6 +48,7 @@ struct SourceLocation
 	bool operator!=(SourceLocation const& _other) const { return !operator==(_other); }
 	inline bool operator<(SourceLocation const& _other) const;
 	inline bool contains(SourceLocation const& _other) const;
+	inline bool intersects(SourceLocation const& _other) const;
 
 	bool isEmpty() const { return start == -1 && end == -1; }
 
@@ -76,6 +77,13 @@ bool SourceLocation::contains(SourceLocation const& _other) const
 	if (isEmpty() || _other.isEmpty() || !sourceName || !_other.sourceName || *sourceName != *_other.sourceName)
 		return false;
 	return start <= _other.start && _other.end <= end;
+}
+
+bool SourceLocation::intersects(SourceLocation const& _other) const
+{
+	if (isEmpty() || _other.isEmpty() || !sourceName || !_other.sourceName || *sourceName != *_other.sourceName)
+		return false;
+	return _other.start < end && start < _other.end;
 }
 
 }

@@ -33,17 +33,16 @@ using namespace dev::solidity;
 
 map<ASTNode const*, GasMeter::GasConsumption[2]> StructuralGasEstimator::performEstimation(
 	AssemblyItems const& _items,
-	vector<SourceUnit const*> const& _ast
+	vector<ASTNode const*> const& _ast
 )
 {
 	map<SourceLocation, GasMeter::GasConsumption> particularCosts;
-	map<ASTNode const*, GasMeter::GasConsumption[2]> gasCosts;
-
 	GasMeter meter;
 
 	for (auto const& item: _items)
 		particularCosts[item.getLocation()] += meter.estimateMax(item);
 
+	map<ASTNode const*, GasMeter::GasConsumption[2]> gasCosts;
 	auto onNode = [&](ASTNode const& _node)
 	{
 		gasCosts[&_node][0] = gasCosts[&_node][1] = particularCosts[_node.getLocation()];
@@ -54,8 +53,56 @@ map<ASTNode const*, GasMeter::GasConsumption[2]> StructuralGasEstimator::perform
 		gasCosts[&_parent][1] += gasCosts[&_child][1];
 	};
 	ASTReduce folder(onNode, onEdge);
-	for (SourceUnit const* unit: _ast)
-		unit->accept(folder);
+	for (ASTNode const* ast: _ast)
+		ast->accept(folder);
 
+	return gasCosts;
+}
+
+map<ASTNode const*, GasMeter::GasConsumption> StructuralGasEstimator::breakToStatementLevel(
+	map<ASTNode const*, GasMeter::GasConsumption[2]> const& _gasCosts,
+	vector<ASTNode const*> const& _roots
+)
+{
+	// first pass: statementDepth[node] is the distance from the deepend statement to node
+	// in direction of the tree root (or undefined if not possible)
+	map<ASTNode const*, int> statementDepth;
+	auto onNodeFirstPass = [&](ASTNode const& _node)
+	{
+		if (dynamic_cast<Statement const*>(&_node))
+			statementDepth[&_node] = 0;
+		return true;
+	};
+	auto onEdgeFirstPass = [&](ASTNode const& _parent, ASTNode const& _child)
+	{
+		if (statementDepth.count(&_child))
+			statementDepth[&_parent] = max(statementDepth[&_parent], statementDepth[&_child] + 1);
+	};
+	ASTReduce firstPass(onNodeFirstPass, onEdgeFirstPass);
+	for (ASTNode const* node: _roots)
+		node->accept(firstPass);
+
+	// we use the location of a node if
+	//  - its statement depth is 0 or
+	//  - its statement depth is undefined but the parent's statement depth is at least 1
+	map<ASTNode const*, GasMeter::GasConsumption> gasCosts;
+	auto onNodeSecondPass = [&](ASTNode const& _node)
+	{
+		return statementDepth.count(&_node);
+	};
+	auto onEdgeSecondPass = [&](ASTNode const& _parent, ASTNode const& _child)
+	{
+		bool useNode = false;
+		if (statementDepth.count(&_child))
+			useNode = statementDepth[&_child] == 0;
+		else
+			useNode = statementDepth.count(&_parent) && statementDepth.at(&_parent) > 0;
+		if (useNode)
+			gasCosts[&_child] = _gasCosts.at(&_child)[1];
+	};
+	ASTReduce secondPass(onNodeSecondPass, onEdgeSecondPass);
+	for (ASTNode const* node: _roots)
+		node->accept(secondPass);
+	// gasCosts should only contain non-overlapping locations
 	return gasCosts;
 }

@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <ostream>
 #include <libevmasm/AssemblyItem.h>
 
 namespace dev
@@ -36,13 +37,14 @@ class GasMeter
 public:
 	struct GasConsumption
 	{
-		GasConsumption() {}
-		GasConsumption(u256 _value, bool _infinite = false): value(_value), isInfinite(_infinite) {}
+		GasConsumption(u256 _value = 0, bool _infinite = false): value(_value), isInfinite(_infinite) {}
 		static GasConsumption infinite() { return GasConsumption(0, true); }
 
 		GasConsumption& operator+=(GasConsumption const& _otherS);
+		std::ostream& operator<<(std::ostream& _str) const;
+
 		u256 value;
-		bool isInfinite = false;
+		bool isInfinite;
 	};
 
 	/// Returns an upper bound on the gas consumed by the given instruction.
@@ -51,6 +53,15 @@ public:
 private:
 	static GasConsumption runGas(Instruction _instruction);
 };
+
+inline std::ostream& operator<<(std::ostream& _str, GasMeter::GasConsumption const& _consumption)
+{
+	if (_consumption.isInfinite)
+		return _str << "inf";
+	else
+		return _str << _consumption.value;
+}
+
 
 }
 }
