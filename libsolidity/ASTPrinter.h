@@ -39,8 +39,11 @@ class ASTPrinter: public ASTConstVisitor
 public:
 	/// Create a printer for the given abstract syntax tree. If the source is specified,
 	/// the corresponding parts of the source are printed with each node.
-	ASTPrinter(ASTNode const& _ast, std::string const& _source = std::string(),
-			   std::map<ASTNode const*, eth::GasMeter::GasConsumption> const& _gasCosts = {});
+	ASTPrinter(
+		ASTNode const& _ast,
+		std::string const& _source = std::string(),
+		std::map<ASTNode const*, eth::GasMeter::GasConsumption> const& _gasCosts = {}
+	);
 	/// Output the string representation of the AST to _stream.
 	void print(std::ostream& _stream);
 
