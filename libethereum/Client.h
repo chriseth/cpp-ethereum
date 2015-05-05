@@ -35,8 +35,8 @@
 #include <libdevcore/CommonIO.h>
 #include <libdevcore/Guards.h>
 #include <libdevcore/Worker.h>
+#include <libethcore/Params.h>
 #include <libethcore/ABI.h>
-#include <libevmcore/Params.h>
 #include <libp2p/Common.h>
 #include "CanonBlockChain.h"
 #include "TransactionQueue.h"
