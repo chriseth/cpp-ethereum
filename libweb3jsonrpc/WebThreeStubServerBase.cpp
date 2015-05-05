@@ -54,7 +54,7 @@ const unsigned dev::SensibleHttpThreads = 1;
 #else
 const unsigned dev::SensibleHttpThreads = 4;
 #endif
-const unsigned dev::SensibleHttpPort = 8080;
+const unsigned dev::SensibleHttpPort = 8545;
 
 static Json::Value toJson(dev::eth::BlockInfo const& _bi)
 {
@@ -505,7 +505,7 @@ string WebThreeStubServerBase::eth_sendTransaction(Json::Value const& _json)
 		if (!t.gasPrice)
 			t.gasPrice = 10 * dev::eth::szabo;		// TODO: should be determined by user somehow.
 		if (!t.gas)
-			t.gas = min<u256>(client()->gasLimitRemaining(), client()->balanceAt(t.from) / t.gasPrice);
+			t.gas = min<u256>(client()->gasLimitRemaining() / 5, client()->balanceAt(t.from) / t.gasPrice);
 
 		if (m_accounts->isRealAccount(t.from))
 			authenticate(t, false);
@@ -534,7 +534,7 @@ string WebThreeStubServerBase::eth_signTransaction(Json::Value const& _json)
 		if (!t.gasPrice)
 			t.gasPrice = 10 * dev::eth::szabo;		// TODO: should be determined by user somehow.
 		if (!t.gas)
-			t.gas = min<u256>(client()->gasLimitRemaining(), client()->balanceAt(t.from) / t.gasPrice);
+			t.gas = min<u256>(client()->gasLimitRemaining() / 5, client()->balanceAt(t.from) / t.gasPrice);
 
 		if (m_accounts->isRealAccount(t.from))
 			authenticate(t, false);

@@ -16,38 +16,38 @@
 */
 /**
  * @author Christian <c@ethdev.com>
- * @date 2014
- * Formatting functions for errors referencing positions and locations in the source.
+ * @date 2015
+ * Utilities to work with the AST.
  */
 
 #pragma once
 
-#include <ostream>
 #include <libevmasm/SourceLocation.h>
+#include <libsolidity/ASTVisitor.h>
 
 namespace dev
 {
-
-struct Exception; // forward
-
 namespace solidity
 {
 
-class Scanner; // forward
-class CompilerStack; // forward
-
-struct SourceReferenceFormatter
+class LocationFinder: private ASTConstVisitor
 {
 public:
-	static void printSourceLocation(std::ostream& _stream, SourceLocation const& _location, Scanner const& _scanner);
-	static void printExceptionInformation(
-		std::ostream& _stream,
-		Exception const& _exception,
-		std::string const& _name,
-		CompilerStack const& _compiler
-	);
+	LocationFinder(SourceLocation const& _location, std::vector<ASTNode const*> _rootNodes):
+		m_rootNodes(_rootNodes), m_location(_location)
+	{
+	}
+
+	/// @returns the "closest" (in the sense of most-leafward) AST node which is a descendant of
+	/// _node and whose source location contains _location.
+	ASTNode const* leastUpperBound();
+
 private:
-	static void printSourceName(std::ostream& _stream, SourceLocation const& _location, Scanner const& _scanner);
+	bool visitNode(ASTNode const& _node);
+
+	std::vector<ASTNode const*> m_rootNodes;
+	SourceLocation m_location;
+	ASTNode const* m_bestMatch = nullptr;
 };
 
 }

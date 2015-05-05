@@ -14,12 +14,35 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file setup.js
- * @authors:
- *   Marek Kotewicz <marek@ethdev.com>
- * @date 2014
+/**
+ * @author Christian <c@ethdev.com>
+ * @date 2015
+ * Utilities to work with the AST.
  */
 
-var web3 = require('web3');
-web3.setProvider(new web3.providers.HttpProvider("http://localhost:8545"));
+#include <libsolidity/ASTUtils.h>
 
+using namespace std;
+using namespace dev;
+using namespace dev::solidity;
+
+
+
+ASTNode const* LocationFinder::leastUpperBound()
+{
+	m_bestMatch = nullptr;
+	for (ASTNode const* rootNode: m_rootNodes)
+		rootNode->accept(*this);
+
+	return m_bestMatch;
+}
+
+bool LocationFinder::visitNode(const ASTNode& _node)
+{
+	if (_node.getLocation().contains(m_location))
+	{
+		m_bestMatch = &_node;
+		return true;
+	}
+	return false;
+}
