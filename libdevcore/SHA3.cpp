@@ -24,6 +24,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <map>
+#include <cryptopp/sha3.h>
 #include <libdevcore/RLP.h>
 #include "picosha2.h"
 using namespace std;
@@ -53,12 +55,12 @@ namespace keccak
 #define decsha3(bits) \
   int sha3_##bits(uint8_t*, size_t, const uint8_t*, size_t);
 
-decshake(128)
-decshake(256)
-decsha3(224)
-decsha3(256)
-decsha3(384)
-decsha3(512)
+//decshake(128)
+//decshake(256)
+//decsha3(224)
+//decsha3(256)
+//decsha3(384)
+//decsha3(512)
 
 /******** The Keccak-f[1600] permutation ********/
 
@@ -167,6 +169,7 @@ static inline int hash(uint8_t* out, size_t outlen,
   if ((out == NULL) || ((in == NULL) && inlen != 0) || (rate >= Plen)) {
 	return -1;
   }
+  outlen =32;
   uint8_t a[Plen] = {0};
   // Absorb input.
   foldP(in, inlen, xorin);
@@ -179,8 +182,9 @@ static inline int hash(uint8_t* out, size_t outlen,
   P(a);
   // Squeeze output.
   foldP(out, outlen, setout);
-  setout(a, out, outlen);
-  memset(a, 0, 200);
+  memcpy(out, a, 256);
+//  setout(a, out, outlen);
+  //memset(a, 0, 200);
   return 0;
 }
 
@@ -200,23 +204,65 @@ static inline int hash(uint8_t* out, size_t outlen,
   }
 
 /*** FIPS202 SHAKE VOFs ***/
-defshake(128)
-defshake(256)
+//defshake(128)
+//defshake(256)
 
 /*** FIPS202 SHA3 FOFs ***/
-defsha3(224)
+//defsha3(224)
 defsha3(256)
-defsha3(384)
-defsha3(512)
+//defsha3(384)
+//defsha3(512)
 
 }
 
+struct h256Simple {
+	uint64_t data[4];
+	h256Simple(h256 const& _h)
+	{
+		std::memcpy(&data[0], _h.data(), 32);
+	}
+	operator h256() {
+		return h256(reinterpret_cast<byte*>(&data[0]), h256::ConstructFromPointer);
+	}
+
+	bool operator<(h256Simple const& _other) const
+	{
+		return std::tie(data[0], data[1], data[2], data[3]) <
+				std::tie(_other.data[0], _other.data[1], _other.data[2], _other.data[3]);
+	}
+};
+
+static std::map<h256Simple, h256Simple> cache;
+
 h256 sha3(bytesConstRef _input)
 {
-	// FIXME: What with unaligned memory?
 	h256 ret;
-	keccak::sha3_256(ret.data(), 32, _input.data(), _input.size());
-//	keccak::keccak(ret.data(), 32, (uint64_t const*)_input.data(), _input.size());
+	bool enable = !true;
+	bool cryptopp = !true;
+	if (cryptopp)
+	{
+		CryptoPP::SHA3_256 ctx;
+		ctx.Update((byte*)_input.data(), _input.size());
+		ctx.Final(ret.data());
+	}
+	else
+	if (enable && _input.size() == 32)
+	{
+		h256 input(_input);
+		auto it = cache.find(input);
+		if (it != cache.end())
+		{
+			return it->second;
+		}
+		keccak::sha3_256(ret.data(), 32, _input.data(), _input.size());
+		cache.insert(make_pair(input, ret));
+	}
+	else
+	{
+		// FIXME: What with unaligned memory?
+		keccak::sha3_256(ret.data(), 32, _input.data(), _input.size());
+	//	keccak::keccak(ret.data(), 32, (uint64_t const*)_input.data(), _input.size());
+	}
 	return ret;
 }
 

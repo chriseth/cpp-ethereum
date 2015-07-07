@@ -89,11 +89,16 @@ contract multiowned {
 
 	// constructor is given number of sigs required to do protected "onlymanyowners" transactions
 	// as well as the selection of addresses capable of confirming them.
-	function multiowned() {
-		m_required = 1;
-		m_numOwners = 1;
-		m_owners[m_numOwners] = uint(msg.sender);
-		m_ownerIndex[uint(msg.sender)] = m_numOwners;
+	function multiowned(address[] _owners, uint _required) {
+		m_numOwners = _owners.length + 1;
+		m_owners[1] = uint(msg.sender);
+		m_ownerIndex[uint(msg.sender)] = 1;
+		for (uint i = 0; i < _owners.length; ++i)
+		{
+			m_owners[2 + i] = uint(_owners[i]);
+			m_ownerIndex[uint(_owners[i])] = 2 + i;
+		}
+		m_required = _required;
 	}
 
 	// Revokes a prior confirmation of the given operation
@@ -346,15 +351,10 @@ contract Wallet is multisig, multiowned, daylimit {
 		bytes data;
 	}
 
-	// EVENTS
-
-	event Created(bytes32 indexed identifier);
-
 	// METHODS
 
-	// constructor - just pass on the owner arra to the multiowned.
-	function Wallet(bytes32 identifier) {
-		Created(identifier);
+	// constructor - just pass on the owner array to the multiowned.
+	function Wallet(address[] _owners, uint _required) multiowned(_owners, _required) {
 	}
 
 	// kills the contract sending everything to `_to`.
@@ -423,7 +423,7 @@ static unique_ptr<bytes> s_compiledWallet;
 class WalletTestFramework: public ExecutionFramework
 {
 protected:
-	void deployWallet(u256 const& _value = 0)
+	void deployWallet(u256 const& _value = 0, std::vector<u256> const& _owners = {}, u256 const& _required = 1)
 	{
 		if (!s_compiledWallet)
 		{
@@ -433,7 +433,8 @@ protected:
 			ETH_TEST_REQUIRE_NO_THROW(m_compiler.compile(m_optimize, m_optimizeRuns), "Compiling contract failed");
 			s_compiledWallet.reset(new bytes(m_compiler.getBytecode("Wallet")));
 		}
-		sendMessage(*s_compiledWallet, true, _value);
+		bytes wallet = *s_compiledWallet + encodeArgs(u256(0x40), _required, u256(_owners.size()), _owners);
+		sendMessage(wallet, true, _value);
 		BOOST_REQUIRE(!m_output.empty());
 	}
 };
@@ -561,6 +562,16 @@ BOOST_AUTO_TEST_CASE(daylimit)
 		encodeArgs(u256(0))
 	);
 	BOOST_CHECK_EQUAL(m_state.balance(Address(0x05)), 90);
+}
+
+BOOST_AUTO_TEST_CASE(owners_at_construction)
+{
+	deployWallet(0, std::vector<u256>{7, 8, 9, 10}, 3);
+	BOOST_CHECK(callContractFunction("m_required()") == encodeArgs(u256(3)));
+	BOOST_CHECK(callContractFunction("m_numOwners())") == encodeArgs(u256(5)));
+	BOOST_REQUIRE(callContractFunction("isOwner(address)", h256(m_sender)) == encodeArgs(true));
+	for (unsigned i = 0; i < 4; ++i)
+		BOOST_CHECK(callContractFunction("isOwner(address)", u256(7 + i)) == encodeArgs(true));
 }
 
 //@todo test data calls
