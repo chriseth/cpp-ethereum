@@ -44,7 +44,8 @@ public:
 	ExecutionFramework()
 	{
 		g_logVerbosity = 0;
-		m_state.resetCurrent();
+		std::cerr << "public: ExecutionFramework() m_state has no member resetCurrent()!" << std::endl;
+		//m_state.resetCurrent(); replace with "m_state = eth::State();" didn't work
 	}
 
 	bytes const& compileAndRunWithoutCheck(
@@ -185,7 +186,7 @@ protected:
 	void sendMessage(bytes const& _data, bool _isCreation, u256 const& _value = 0)
 	{
 		m_state.addBalance(m_sender, _value); // just in case
-		eth::Executive executive(m_state, eth::LastHashes(), 0);
+		eth::Executive executive(m_state, eth::EnvInfo(), 0);
 		eth::ExecutionResult res;
 		executive.setResultRecipient(res);
 		eth::Transaction t =
